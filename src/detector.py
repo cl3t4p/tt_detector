@@ -32,7 +32,7 @@ class DecayAverageDetect(BounceDetector):
     gamma : decay factor
     """
 
-    def __init__(self,decay: float = 0.9, threshold_multiplier: float = 3.0, timeout_ms: float = 100.0,
+    def __init__(self,decay: float = 0.8, threshold_multiplier: float = 2.0, timeout_ms: float = 70.0,
                  apply_highpass: bool = True, highpass_cutoff: float = 10000.0):
         self.decay = decay
         self.threshold_multiplier = threshold_multiplier
@@ -64,6 +64,8 @@ class DecayAverageDetect(BounceDetector):
         self._avg_history = np.zeros_like(energy)
         self._threshold_history = np.zeros_like(energy)
 
+        # First is the index second is the value e
+        highest_peak = (0,0)
         for i,e in enumerate(energy):
             # Base formula of the decay
             avg_energy = self.decay * avg_energy + (1 - self.decay) * e
@@ -71,13 +73,21 @@ class DecayAverageDetect(BounceDetector):
             # Store history
             self._avg_history[i] = avg_energy
             self._threshold_history[i] = self.threshold_multiplier * avg_energy
+        
+
+            # Last highest_peak            
+            if (highest_peak[1] < e and i - last_peak >= timeout_frames):
+                highest_peak = (i,e)
 
 
             # Check if the energy is greater than the activation threshold  + the timeout has expired
             if( e > self.threshold_multiplier * avg_energy and i - last_peak >= timeout_frames):
                 # TODO Check if the timestamp does not have shift error
                 #timestamp = (i*hop_length) / sr
-                peaks.append(i)
+
+                print(f"Found at {i} but highest at {highest_peak[0]}")
+                peaks.append(highest_peak[0])
+                highest_peak = (0,0)
                 last_peak = i;
 
         return peaks
