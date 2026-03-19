@@ -14,24 +14,18 @@ waveform , sr = open_audio(file)
 waveform = waveform.numpy()
 
 
-aud = audio_utils.open_audio(file)
-print(type(aud))
-aud = audio_utils.pad_trunc(aud)
 
-exit()
 energy_calculators = [PowerEnergyCalculator(),RMSEnergyCalculator(),TeagerEnergyCalculator(),SimpleEnergyCalculator()]
 
 def calculate_peaks(energy_calculator : BaseEnergyCalculator):
 
     print(f"\n\nENERGY : {energy_calculator.__class__.__name__}")
-    decay_detector =  DecayAverageDetect(energy_calculator=energy_calculator)
+    decay_detector =  DecayAverageDetect(energy_calculator=energy_calculator,return_indexes=False)
     detected_times = decay_detector.detect(waveform,sr)
 
-    frame_len = sr / 1000.0
 
-    for i in range(0,len(detected_times)):
-        frame_time = detected_times[i] * frame_len / sr
-        print(f"Detection {i} : at {frame_time}")
+    for i,det in enumerate(detected_times):
+        print(f"Detection {i} : at {det:.2f}")
 
     print(f"N of detections : {len(detected_times)}\n\n")
 

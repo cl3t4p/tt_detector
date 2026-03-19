@@ -54,13 +54,32 @@ def _spin_label(row) -> int:
 
 
 
+def _time_shift(audio, shift_limit: float = 0.05):
+    """Randomly circular-shift a 1D waveform."""
+    waveform, sr = audio
+
+    max_shift = int(shift_limit * waveform.shape[0])
+    if max_shift == 0:
+        return waveform, sr
+
+    shift_amt = torch.randint(-max_shift, max_shift + 1, (1,)).item()
+    waveform = waveform.roll(shift_amt)
+
+    return waveform, sr
+
+
 class SoundDS(Dataset):
     """Dataset of the individual bounce sound clips"""
 
-    def __init__(self,csv_path: str,sounds_dir: str, max_len: int = 661):
+    def __init__(self,
+                 csv_path: str,
+                 sounds_dir: str, 
+                 max_len: int = 661,
+                 augment: bool = True):
         self.df = pd.read_csv(csv_path)
         self.sounds_dir = sounds_dir
         self.max_len = max_len
+        self.augment = augment
 
 
     def __len__(self):
@@ -76,10 +95,14 @@ class SoundDS(Dataset):
         aud = audio_utils.open_audio(audio_path)
         aud = audio_utils.pad_trunc(aud)
 
+        if (self.augment):
+            aud = _time_shift(aud)
+
         waveform , sr = aud
         mel = audio_utils.mel_spectro_gram(waveform.numpy(),sr)
         surface = _surface_label(row)
         spin = _spin_label(row)
+            
 
         return mel, torch.tensor(surface,dtype=torch.long), \
                 torch.tensor(spin,dtype=torch.long)
