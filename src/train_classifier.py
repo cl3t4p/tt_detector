@@ -50,9 +50,6 @@ def main():
             accelerator='auto'
             )
 
-    # optional: log gradients / parameter histograms / graph
-    wandb_logger.watch(model, log="all", log_freq=100)
-
     trainer.fit(model=model, datamodule=dm)
     trainer.test(model=model, datamodule=dm)
 
