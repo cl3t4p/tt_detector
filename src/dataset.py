@@ -1,9 +1,11 @@
 import os
+
+import lightning
 import pandas as pd
-from torch.utils.data import Dataset
 import torch
+from torch.utils.data import Dataset, DataLoader
+
 import audio_utils
-import src.audio_utils
 
 SURFACE_CLASSES = [
         'other',
@@ -33,13 +35,13 @@ def _surface_label(row) -> int:
     surface = str(row['surface']).strip().lower()
     racket_type = str(row['racket-type']).strip().lower()
 
-    if(surface == 'racket' and racket_type != 'none'):
+    if surface == 'racket' and racket_type != 'none':
         key = f'racket_{racket_type.zfill(2)}'
     else:
         key = surface
 
         
-    if(key in SURFACE_CLASSES):
+    if key in SURFACE_CLASSES:
         return SURFACE_CLASSES.index(key)
     else:
         return SURFACE_CLASSES.index('other')
@@ -47,7 +49,7 @@ def _surface_label(row) -> int:
 def _spin_label(row) -> int:
     direction = str(row['spin-direction']).strip().lower()
 
-    if(direction in SURFACE_CLASSES):
+    if direction in SURFACE_CLASSES:
         return SURFACE_CLASSES.index(direction)
     else:
         return SURFACE_CLASSES.index('other')
@@ -95,14 +97,60 @@ class SoundDS(Dataset):
         aud = audio_utils.open_audio(audio_path)
         aud = audio_utils.pad_trunc(aud)
 
-        if (self.augment):
+        if self.augment:
             aud = _time_shift(aud)
 
         waveform , sr = aud
-        mel = audio_utils.mel_spectro_gram(waveform.numpy(),sr)
+        mel = audio_utils.mel_spectro_gram(waveform,sr)
         surface = _surface_label(row)
         spin = _spin_label(row)
             
 
         return mel, torch.tensor(surface,dtype=torch.long), \
                 torch.tensor(spin,dtype=torch.long)
+
+
+class SoundDataModule(lightning.LightningDataModule):
+
+    def __init__(self,
+                 data_dir: str = 'data',
+                 sounds_subdir='sounds',
+                 batch_size: int = 32,
+                 num_workers: int = 4,
+                 sr: int = 44100,
+                 max_len: int = 611):
+        super().__init__()
+        self.test_ds = None
+        self.train_ds = None
+        self.data_dir = data_dir
+        self.sounds_dir = os.path.join(data_dir, sounds_subdir)
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.sr = sr
+        self.max_len = max_len
+
+    def setup(self, stage=None):
+        train_csv = os.path.join(self.data_dir, 'train.csv')
+        test_csv = os.path.join(self.data_dir, 'test.csv')
+
+        self.train_ds = SoundDS(train_csv,
+                                self.sounds_dir,
+                                self.max_len,
+                                augment=True
+                                )
+        self.test_ds = SoundDS(train_csv,
+                               self.sounds_dir,
+                               self.max_len,
+                               augment=False
+                               )
+
+    def train_dataloader(self):
+        return DataLoader(self.train_ds, batch_size=self.batch_size,
+                          shuffle=True, num_workers=self.num_workers)
+
+    def val_dataloader(self):
+        return DataLoader(self.train_ds, batch_size=self.batch_size,
+                          shuffle=False, num_workers=self.num_workers)
+
+    def test_dataloader(self):
+        return self.val_dataloader()

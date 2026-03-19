@@ -21,7 +21,7 @@ def open_audio(audio_file: str):
 def pad_trunc(audio, max_len : int = 611):
     waveform , sr = audio
     num_samples  = len(waveform)
-    if(num_samples > max_len):
+    if num_samples > max_len:
     # Truncate from the beginning
         waveform = waveform[:max_len]
     elif num_samples < max_len:
@@ -35,7 +35,6 @@ def pad_trunc(audio, max_len : int = 611):
 
 
 ## Filters
-
 def highpass_filter(waveform: np.ndarray,sr: int = 44100,
                     cutoff: float = 10000.0,order:int = 5) -> np.ndarray:
     """
@@ -47,8 +46,7 @@ def highpass_filter(waveform: np.ndarray,sr: int = 44100,
     return filtered
 
 ## Extraction
-
-def mel_spectro_gram(waveform:np.ndarray,sr: int = 44100,n_ftt: int = 1024
+def mel_spectro_gram(waveform,sr: int = 44100,n_ftt: int = 1024
                      ,win_length: int = 128,hop_length: int = 64, 
                      n_mels: int = 64, top_db: int = 80):
     mel = Transforms.MelSpectrogram(

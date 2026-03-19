@@ -1,0 +1,52 @@
+import argparse 
+import lightning
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
+
+from classifier import AudioClassifier
+from dataset import SoundDataModule
+
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Train bounce classifier")
+
+    parser.add_argument('--classify',choices=['surface','spin'],default='surface')
+    parser.add_argument('--epochs',type=int,default=150)
+    parser.add_argument('--batch_size',type=int,default=32)
+    parser.add_argument('--lr',type=int,default=1e-3)
+    parser.add_argument('--data_dir',type=str,default='data')
+    parser.add_argument('--seed',type=int,default=42)
+
+    args = parser.parse_args()
+
+    lightning.seed_everything(args.seed)
+
+
+    model = AudioClassifier(task=args.classify, learning_rate=args.lr)
+    dm = SoundDataModule(data_dir=args.data_dir, batch_size=args.batch_size)
+
+    callbacks = [
+            ModelCheckpoint(
+                dirpath='models',
+                filename=f'{args.classify}_best',
+                monitor='val_acc',
+                mode='max',
+                save_top_k=1,
+                ),
+            EarlyStopping(monitor='val_loss',patience=20,mode='min')
+            ]
+
+    trainer = lightning.Trainer(
+            max_epochs=args.epochs,
+            callbacks=callbacks,
+            deterministic=True,
+            accelerator='auto'
+            )
+
+    trainer.fit(model,dm)
+    trainer.test(model,dm)
+
+
+
+if __name__ == '__main__':
+    main()

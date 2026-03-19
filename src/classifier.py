@@ -6,22 +6,24 @@ from torchmetrics import Accuracy
 import torchmetrics
 
 
-__valid_classes = {
+
+_valid_classes = {
         'surface' : 13,
         'spin' : 3
         }
 
-
 class AudioClassifier(lightning.LightningModule):
+
+
 
     def __init__(self,task : Literal['surface','spin'],learning_rate: float = 1e-3):
         super().__init__()
-        if(task not in __valid_classes):
+        if task not in _valid_classes:
             raise ValueError(
-                    f"Unknow task '{task}'. Expected one of {sorted(__valid_classes)}"
+                    f"Unknow task '{task}'. Expected one of {sorted(_valid_classes)}"
                     )
         self.learning_rate = learning_rate
-        num_classes = __valid_classes[task]
+        num_classes = _valid_classes[task]
 
 
         self.save_hyperparameters({
@@ -83,8 +85,8 @@ class AudioClassifier(lightning.LightningModule):
                 nn.init.kaiming_normal_(m.weight,mode='fan_out',nonlinearity='relu')
 
     def forward(self,x):
-        featuers = self.features(x)
-        result = self.classifier(featuers)
+        features = self.features(x)
+        result = self.classifier(features)
         return result
 
 
@@ -93,7 +95,7 @@ class AudioClassifier(lightning.LightningModule):
         logits = self(mel)
 
 
-        if(self.hparams.task == "surface"):
+        if self.hparams.task == "surface":
             target = surface
         else:
             target = spin
