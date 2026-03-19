@@ -1,5 +1,6 @@
 import argparse 
 import lightning
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 
 from classifier import AudioClassifier
@@ -25,6 +26,12 @@ def main():
     model = AudioClassifier(task=args.classify, learning_rate=args.lr)
     dm = SoundDataModule(data_dir=args.data_dir, batch_size=args.batch_size)
 
+    wandb_logger = WandbLogger(
+        project="tt_detector",
+        name=f"{args.classify}-lr{args.lr}",
+        log_model="all",   # logs checkpoints as W&B artifacts
+    )
+
     callbacks = [
             ModelCheckpoint(
                 dirpath='models',
@@ -43,8 +50,11 @@ def main():
             accelerator='auto'
             )
 
-    trainer.fit(model,dm)
-    trainer.test(model,dm)
+    # optional: log gradients / parameter histograms / graph
+    wandb_logger.watch(model, log="all", log_freq=100)
+
+    trainer.fit(model=model, datamodule=dm)
+    trainer.test(model=model, datamodule=dm)
 
 
 

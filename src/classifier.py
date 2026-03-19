@@ -72,9 +72,27 @@ class AudioClassifier(lightning.LightningModule):
         # Metrics
         self.train_acc = Accuracy(task="multiclass",num_classes=num_classes)
         self.val_acc = Accuracy(task="multiclass",num_classes=num_classes)
+        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
         self.val_f1 = torchmetrics.F1Score(task="multiclass",num_classes=num_classes,average='macro')
         self.val_precision = torchmetrics.Precision(task='multiclass',num_classes=num_classes,average='macro')
         self.val_recall = torchmetrics.Recall(task='multiclass',num_classes=num_classes,average='macro')
+
+        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.test_f1 = torchmetrics.F1Score(
+            task="multiclass",
+            num_classes=num_classes,
+            average="macro",
+        )
+        self.test_precision = torchmetrics.Precision(
+            task="multiclass",
+            num_classes=num_classes,
+            average="macro",
+        )
+        self.test_recall = torchmetrics.Recall(
+            task="multiclass",
+            num_classes=num_classes,
+            average="macro",
+        )
 
         # Self init
         self._init_weights()
@@ -85,6 +103,8 @@ class AudioClassifier(lightning.LightningModule):
                 nn.init.kaiming_normal_(m.weight,mode='fan_out',nonlinearity='relu')
 
     def forward(self,x):
+        if x.ndim == 3:
+            x = x.unsqueeze(1)
         features = self.features(x)
         result = self.classifier(features)
         return result
@@ -109,8 +129,26 @@ class AudioClassifier(lightning.LightningModule):
         self.train_acc(preds,target)
         
         # Log
-        self.log('train_loss',loss,prog_bar=True)
-        self.log('train_acc',self.train_acc,prog_bar=True)
+
+        self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("train_acc", self.train_acc, prog_bar=True, on_step=False, on_epoch=True)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        loss, preds, target = self._shared_step(batch, "test")
+
+        self.test_acc(preds, target)
+        self.test_f1(preds, target)
+        self.test_precision(preds, target)
+        self.test_recall(preds, target)
+
+        self.log("test_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("test_acc", self.test_acc, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("test_f1", self.test_f1, on_step=False, on_epoch=True)
+        self.log("test_precision", self.test_precision, on_step=False, on_epoch=True)
+        self.log("test_recall", self.test_recall, on_step=False, on_epoch=True)
+
+        return loss
 
     def validation_step(self,batch,batch_idx):
         loss,preds,target = self._shared_step(batch,'val')
