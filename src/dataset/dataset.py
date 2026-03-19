@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from torch.utils.data import Dataset
+import torch
 import audio_utils
 import src.audio_utils
 
@@ -56,11 +57,10 @@ def _spin_label(row) -> int:
 class SoundDS(Dataset):
     """Dataset of the individual bounce sound clips"""
 
-    def __init__(self,csv_path: str,sounds_dir: str, max_len: int = 661,augment: bool = False):
+    def __init__(self,csv_path: str,sounds_dir: str, max_len: int = 661):
         self.df = pd.read_csv(csv_path)
         self.sounds_dir = sounds_dir
         self.max_len = max_len
-        self.augment = augment
 
 
     def __len__(self):
@@ -74,4 +74,12 @@ class SoundDS(Dataset):
 
         # Load and preprocess
         aud = audio_utils.open_audio(audio_path)
-        aud = audio_utils.pad
+        aud = audio_utils.pad_trunc(aud)
+
+        waveform , sr = aud
+        mel = audio_utils.mel_spectro_gram(waveform.numpy(),sr)
+        surface = _surface_label(row)
+        spin = _spin_label(row)
+
+        return mel, torch.tensor(surface,dtype=torch.long), \
+                torch.tensor(spin,dtype=torch.long)

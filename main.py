@@ -1,8 +1,8 @@
 import pandas as pd
 
 
-
-from src.audio_utils import open_audio
+import src.audio_utils as audio_utils
+from src.audio_utils import open_audio, pad_trunc
 from src.detectors import DecayAverageDetect, PowerEnergyCalculator,RMSEnergyCalculator, TeagerEnergyCalculator,SimpleEnergyCalculator,BaseEnergyCalculator
 
 
@@ -14,6 +14,11 @@ waveform , sr = open_audio(file)
 waveform = waveform.numpy()
 
 
+aud = audio_utils.open_audio(file)
+print(type(aud))
+aud = audio_utils.pad_trunc(aud)
+
+exit()
 energy_calculators = [PowerEnergyCalculator(),RMSEnergyCalculator(),TeagerEnergyCalculator(),SimpleEnergyCalculator()]
 
 def calculate_peaks(energy_calculator : BaseEnergyCalculator):

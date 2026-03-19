@@ -18,16 +18,19 @@ def open_audio(audio_file: str):
     return waveform,sr
 
 
-def pad_trunc(waveform : np.ndarray, max_len : int 611):
+def pad_trunc(audio, max_len : int = 611):
+    waveform , sr = audio
     num_samples  = len(waveform)
     if(num_samples > max_len):
     # Truncate from the beginning
-        waveform = waveform[:, : max_len]
+        waveform = waveform[:max_len]
     elif num_samples < max_len:
+        # Fill with zeros with a random shift
         pad_total = max_len - num_samples
         pad_begin = torch.randint(0,pad_total + 1 ,(1,)).item()
         pad_end = pad_total - pad_begin
-        waveform = torch.nn.functional
+        waveform = torch.nn.functional.pad(waveform,(pad_begin,pad_end))
+    return waveform , sr
 
 
 
