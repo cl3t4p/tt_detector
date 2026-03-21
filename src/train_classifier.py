@@ -3,7 +3,7 @@ import lightning
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 
-from classifier import AudioClassifier
+from classifier.cnn import AudioClassifier
 from dataset import SoundDataModule
 
 
