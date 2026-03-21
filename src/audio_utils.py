@@ -1,15 +1,15 @@
-import torchaudio
 from scipy.signal import butter,sosfiltfilt
 import numpy as np
-import torch
 import torchaudio.transforms as Transforms
+from torchaudio import load
+import torch
 
 
 
 
 def open_audio(audio_file: str):
     """Load audio file and return (mono_waveform, sample_rate)"""
-    waveform, sr = torchaudio.load(audio_file)
+    waveform, sr = load(audio_file)
 
     # Do not return dimension we work only with mono
     waveform = waveform.mean(dim=0)
