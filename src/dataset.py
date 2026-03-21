@@ -49,10 +49,10 @@ def _surface_label(row) -> int:
 def _spin_label(row) -> int:
     direction = str(row['spin-direction']).strip().lower()
 
-    if direction in SURFACE_CLASSES:
-        return SURFACE_CLASSES.index(direction)
+    if direction in SPIN_CLASSES:
+        return SPIN_CLASSES.index(direction)
     else:
-        return SURFACE_CLASSES.index('other')
+        return SPIN_CLASSES.index('none')
 
 
 
