@@ -1,6 +1,6 @@
 from scipy.signal import butter,sosfiltfilt
 import numpy as np
-import torchaudio.transforms as Transforms
+import torchaudio.transforms as transforms
 from torchaudio import load
 import torch
 
@@ -49,15 +49,36 @@ def highpass_filter(waveform: np.ndarray,sr: int = 44100,
 def mel_spectro_gram(waveform,sr: int = 44100,n_ftt: int = 1024
                      ,win_length: int = 128,hop_length: int = 64, 
                      n_mels: int = 64, top_db: int = 80):
-    mel = Transforms.MelSpectrogram(
+    # The spectrogram uses pytorch tensor
+
+    if not isinstance(waveform, torch.Tensor):
+        waveform = torch.tensor(waveform, dtype=torch.float32)
+    if waveform.dim() == 1:
+        waveform = waveform.unsqueeze(0)  # [time] → [1, time]
+    mel = transforms.MelSpectrogram(
             sample_rate=sr,
             n_fft=n_ftt,
             win_length=win_length,
             hop_length=hop_length,
             n_mels=n_mels,
             )(waveform)
-    mel_db = Transforms.AmplitudeToDB(top_db=top_db)(mel)
+    mel_db = transforms.AmplitudeToDB(top_db=top_db)(mel)
     return mel_db
 
 
+def mfcc(audio, n_mfcc: int = 40, n_fft: int = 1024, win_length: int = 128,
+         hop_length: int = 64, n_mels: int = 64):
+    """Compute Mel-Frequency Cepstral Coefficients."""
+    sig, sr = audio
+    mfcc_transform = transforms.MFCC(
+        sample_rate=sr,
+        n_mfcc=n_mfcc,
+        melkwargs={
+            'n_fft': n_fft,
+            'win_length': win_length,
+            'hop_length': hop_length,
+            'n_mels': n_mels,
+        },
+    )
+    return mfcc_transform(sig)
 

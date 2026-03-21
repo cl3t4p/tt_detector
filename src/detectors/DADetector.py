@@ -20,7 +20,10 @@ class DecayAverageDetect(BounceDetector):
                  apply_highpass: bool = True, 
                  highpass_cutoff: float = 10000.0,
                  energy_calculator : BaseEnergyCalculator = SimpleEnergyCalculator(),
-                 return_indexes=True):
+                 return_indexes=False):
+        self.threshold_history_ = None
+        self.avg_history_ = None
+        self.energy_history_ = None
         self.decay = decay
         self.threshold_multiplier = threshold_multiplier
         self.frame_ms = frame_ms
@@ -60,8 +63,7 @@ class DecayAverageDetect(BounceDetector):
             if (e >= self.threshold_multiplier * avg_energy
                     and i - last_peak >= timeout_frames):
 
-
-                if(self.return_indexes):
+                if self.return_indexes:
                     peaks.append(i*hop_length)
                 else:
                     timestamp = (i*hop_length) /sr

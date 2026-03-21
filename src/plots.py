@@ -1,10 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import torchaudio
-import torchaudio.transforms as ta_transforms
-
-import audio_utils
-
 
 
 ## Waveform visualization
@@ -39,7 +34,7 @@ def plot_waveform_ms(waveform, sr=44100,title="Bounce Waveform",ax=None):
 
 ## Spectrogram visualization
 
-def plot_mel_spectrogram(mel_db,sr=44100,hop_length=64,tile="Mel spectrogram",ax=None):
+def plot_mel_spectrogram(mel_db, sr=44100, hop_length=64, title="Mel spectrogram", ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(8,4))
     if hasattr(mel_db, "numpy"):
@@ -52,7 +47,7 @@ def plot_mel_spectrogram(mel_db,sr=44100,hop_length=64,tile="Mel spectrogram",ax
     im = ax.imshow(mel_db,aspect="auto",origin="lower",extent=extent,cmap='inferno')
     ax.set_xlabel("Time (ms)")
     ax.set_ylabel("Mel Frequency Bins (dB)")
-    ax.set_title(tile)
+    ax.set_title(title)
     plt.colorbar(im, ax=ax,label="dB")
     return ax
 
@@ -69,3 +64,21 @@ def plot_spectrogram(spec,title="Spectrogram",ax=None):
     plt.colorbar(im, ax=ax, label='dB')
     return ax
 
+def plot_mfcc(mfcc_data, sr=44100, hop_length=64, title="MFCC", ax=None):
+    """Plot MFCCs."""
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 4))
+    if hasattr(mfcc_data, 'numpy'):
+        mfcc_data = mfcc_data.squeeze().numpy()
+
+    n_frames = mfcc_data.shape[1]
+    time_ms = np.arange(n_frames) * hop_length / sr * 1000.0
+    extent = [time_ms[0], time_ms[-1], 0, mfcc_data.shape[0]]
+
+    im = ax.imshow(mfcc_data, aspect='auto', origin='lower', extent=extent,
+                   cmap='inferno')
+    ax.set_xlabel("Time (ms)")
+    ax.set_ylabel("MFCC Coefficient")
+    ax.set_title(title)
+    plt.colorbar(im, ax=ax, label='Value')
+    return ax

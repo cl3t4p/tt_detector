@@ -1,5 +1,6 @@
 from .DADetector import DecayAverageDetect,BaseEnergyCalculator
 from .energy_calculator import SimpleEnergyCalculator , RMSEnergyCalculator , PowerEnergyCalculator, TeagerEnergyCalculator
+from .base import evaluate_detector
 
 
 __all__ = [
@@ -9,5 +10,6 @@ __all__ = [
         "PowerEnergyCalculator",
         "TeagerEnergyCalculator",
         "DecayAverageDetect",
-        "BaseEnergyCalculator"
+        "BaseEnergyCalculator",
+        "evaluate_detector",
         ]
