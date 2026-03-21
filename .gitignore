@@ -5,3 +5,5 @@ data/
 .vscode/
 **/__pycache__/
 .python-version
+report/
+lightning_logs/

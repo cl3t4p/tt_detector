@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import sklearn.metrics as skmetrics
 
 
 ## Waveform visualization
@@ -82,3 +84,23 @@ def plot_mfcc(mfcc_data, sr=44100, hop_length=64, title="MFCC", ax=None):
     ax.set_title(title)
     plt.colorbar(im, ax=ax, label='Value')
     return ax
+
+
+def plot_confusion_matrix(y_true, y_pred, class_names, title="Confusion Matrix",
+                          normalize=True, figsize=(10, 8)):
+    """Plot a confusion matrix with optional normalization."""
+    cm = skmetrics.confusion_matrix(y_true, y_pred)
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+        fmt = '.2f'
+    else:
+        fmt = 'd'
+
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.heatmap(cm, annot=True, fmt=fmt, cmap='YlOrBr',
+                xticklabels=class_names, yticklabels=class_names, ax=ax)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("True")
+    ax.set_title(title)
+    plt.tight_layout()
+    return fig
