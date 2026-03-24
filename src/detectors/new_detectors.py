@@ -1,9 +1,4 @@
 """
-New peak / onset detection methods for bounce detection.
-
-Each detector inherits from BounceDetector and implements `detect()`,
-returning a list of bounce timestamps (in seconds).
-
 References
 ----------
 [1] Bello, J.P., Daudet, L., Abdallah, S., Duxbury, C., Davies, M.,
@@ -11,15 +6,7 @@ References
     IEEE Transactions on Speech and Audio Processing, 13(5), 1035-1047.
     https://hajim.rochester.edu/ece/sites/zduan/teaching/ece472/reading/Bello_2005.pdf
 
-[2] Dixon, S. (2006). "Onset Detection Revisited."
-    Proc. 9th Int. Conference on Digital Audio Effects (DAFx-06), Montreal.
-    https://www.dafx.de/paper-archive/2006/papers/p_133.pdf
-
-[3] Masri, P. (1996). "Computer Modelling of Sound for Transformation and
-    Synthesis of Musical Signals." PhD thesis, University of Bristol.
-    (Original HFC formulation; reviewed in [1])
-
-[4] Böck, S. & Widmer, G. (2013). "Maximum Filter Vibrato Suppression for
+[2] Böck, S. & Widmer, G. (2013). "Maximum Filter Vibrato Suppression for
     Onset Detection." Proc. 16th Int. Conference on Digital Audio Effects
     (DAFx-13), Maynooth, Ireland.
     https://phenicx.upf.edu/system/files/publications/Boeck_DAFx-13.pdf
@@ -29,8 +16,7 @@ References
 import numpy as np
 import src.audio_utils as audio_utils
 
-from .base import BounceDetector, BaseEnergyCalculator
-from .energy_calculator import SimpleEnergyCalculator
+from .base import BounceDetector
 
 
 # ---------------------------------------------------------------------------
@@ -114,82 +100,7 @@ class SpectralFluxDetect(BounceDetector):
 
 
 # ---------------------------------------------------------------------------
-# 2. High Frequency Content (HFC) Detector
-# ---------------------------------------------------------------------------
-
-class HFCDetect(BounceDetector):
-    """Detect bounces using the High Frequency Content detection function.
-
-    HFC weights each spectral bin by its frequency index, amplifying
-    high-frequency transients — exactly the kind of signal produced by
-    ball bounces on hard surfaces.
-
-    The HFC onset function at frame n is:
-
-        HFC(n) = sum_k  k * |X(n,k)|^2
-
-    where k is the bin index and X(n,k) is the STFT coefficient.
-
-    This was first proposed by Masri (1996) [3] and reviewed extensively
-    in Bello et al. (2005) [1] Section III-A.
-
-    References: [1] Section III-A, [3].
-    """
-
-    def __init__(self, n_fft: int = 1024, hop_length: int = 512,
-                 threshold_multiplier: float = 3.0,
-                 median_window: int = 15,
-                 timeout_ms: float = 100.0,
-                 apply_highpass: bool = False,
-                 highpass_cutoff: float = 10000.0):
-        self.n_fft = n_fft
-        self.hop_length = hop_length
-        self.threshold_multiplier = threshold_multiplier
-        self.median_window = median_window
-        self.timeout_ms = timeout_ms
-        self.apply_highpass = apply_highpass
-        self.highpass_cutoff = highpass_cutoff
-
-    def detect(self, waveform: np.ndarray, sr: int = 44100) -> list[float]:
-        if self.apply_highpass:
-            waveform = audio_utils.highpass_filter(waveform, sr,
-                                                   self.highpass_cutoff)
-
-        window = np.hanning(self.n_fft)
-        n_frames = 1 + (len(waveform) - self.n_fft) // self.hop_length
-        n_bins = self.n_fft // 2 + 1
-        weights = np.arange(n_bins, dtype=np.float64)  # k = 0,1,...,N/2
-
-        hfc = np.zeros(n_frames)
-        for i in range(n_frames):
-            start = i * self.hop_length
-            frame = waveform[start:start + self.n_fft] * window
-            spectrum = np.fft.rfft(frame)
-            power = np.abs(spectrum) ** 2
-            hfc[i] = np.sum(weights * power)
-
-        # Adaptive median threshold (same strategy as spectral flux)
-        half_w = self.median_window // 2
-        padded = np.pad(hfc, (half_w, half_w), mode='reflect')
-        threshold = np.array([
-            np.median(padded[i:i + self.median_window])
-            for i in range(len(hfc))
-        ]) * self.threshold_multiplier
-
-        timeout_frames = int(self.timeout_ms / 1000.0 * sr / self.hop_length)
-
-        peaks: list[float] = []
-        last_peak = -timeout_frames
-        for i in range(len(hfc)):
-            if hfc[i] > threshold[i] and (i - last_peak) >= timeout_frames:
-                t = i * self.hop_length / sr
-                peaks.append(t)
-                last_peak = i
-        return peaks
-
-
-# ---------------------------------------------------------------------------
-# 3. SuperFlux Detector
+# 2. SuperFlux Detector
 # ---------------------------------------------------------------------------
 
 class SuperFluxDetect(BounceDetector):
@@ -210,7 +121,7 @@ class SuperFluxDetect(BounceDetector):
          and the max-filtered previous frame.
       4. Pick peaks with adaptive threshold.
 
-    Reference: [4].
+    Reference: [2].
     """
 
     def __init__(self, n_fft: int = 2048, hop_length: int = 512,
@@ -300,11 +211,22 @@ class SuperFluxDetect(BounceDetector):
 
         timeout_frames = int(self.timeout_ms / 1000.0 * sr / self.hop_length)
 
+        # When the ODF triggers, refine the timestamp by finding the
+        # highest absolute amplitude peak in the raw waveform within the
+        # STFT analysis window.  This gives sample-accurate timing.
+        abs_wave = np.abs(waveform)
+
         peaks: list[float] = []
         last_peak = -timeout_frames
         for i in range(len(odf)):
             if odf[i] > threshold[i] and (i - last_peak) >= timeout_frames:
-                t = (i + 1) * self.hop_length / sr
+                # Search region: the STFT frame that triggered the ODF
+                search_start = (i + 1) * self.hop_length
+                search_end = min(search_start + self.n_fft, len(waveform))
+                peak_sample = search_start + np.argmax(
+                    abs_wave[search_start:search_end]
+                )
+                t = peak_sample / sr
                 peaks.append(t)
                 last_peak = i
         return peaks

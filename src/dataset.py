@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-import audio_utils
+import src.audio_utils as audio_utils
 
 SURFACE_CLASSES = [
         'other',

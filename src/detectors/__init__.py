@@ -1,7 +1,7 @@
 from .DADetector import DecayAverageDetect,BaseEnergyCalculator
 from .energy_calculator import SimpleEnergyCalculator , RMSEnergyCalculator , PowerEnergyCalculator, TeagerEnergyCalculator
 from .base import evaluate_detector
-from .new_detectors import SpectralFluxDetect, HFCDetect, SuperFluxDetect
+from .new_detectors import SpectralFluxDetect, SuperFluxDetect
 
 
 __all__ = [
@@ -14,6 +14,5 @@ __all__ = [
         "BaseEnergyCalculator",
         "evaluate_detector",
         "SpectralFluxDetect",
-        "HFCDetect",
         "SuperFluxDetect",
         ]
