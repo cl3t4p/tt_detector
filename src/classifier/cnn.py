@@ -54,7 +54,7 @@ class AudioClassifier(lightning.LightningModule):
                 nn.Conv2d(16,32,kernel_size=3,stride=(2,1),padding=1),
                 nn.ReLU(),
                 nn.BatchNorm2d(32),
-                # LOayer 6
+                # Layer 6
                 nn.Conv2d(32,64,kernel_size=3,stride=(2,1),padding=1),
                 nn.ReLU(),
                 nn.BatchNorm2d(64),
@@ -66,12 +66,22 @@ class AudioClassifier(lightning.LightningModule):
                 nn.Linear(64,num_classes)
         )
 
-        self.loss_fn = nn.CrossEntropyLoss()
+        # Because in the spin classification the top samples are very rare we try to balance that
+        if task == 'spin':
+            self._loss_weight = torch.tensor([
+                4561 / 923,  # back:  ~4.9x
+                4561 / 3098,  # none:  ~1.5x
+                4561 / 540,  # top:   ~8.4x
+            ])
+            self.loss_fn = nn.CrossEntropyLoss(self._loss_weight)
 
+        else:
+            self.loss_fn = nn.CrossEntropyLoss()
+            self._loss_weight = None
 
         # Metrics
-        self.train_acc = Accuracy(task="multiclass",num_classes=num_classes)
-        self.val_acc = Accuracy(task="multiclass",num_classes=num_classes)
+        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
         self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
         self.val_f1 = torchmetrics.F1Score(task="multiclass",num_classes=num_classes,average='macro')
         self.val_precision = torchmetrics.Precision(task='multiclass',num_classes=num_classes,average='macro')
