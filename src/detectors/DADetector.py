@@ -1,4 +1,4 @@
-import src.audio_utils as audio_utils
+import audio_utils
 import numpy as np
 
 from .base import BounceDetector,BaseEnergyCalculator
@@ -13,14 +13,16 @@ class DecayAverageDetect(BounceDetector):
         E_{k+1} = gamma * E_k + (1 - gamma) * e_k
     """
 
-    def __init__(self, decay: float = 0.9, 
+    def __init__(self, decay: float = 0.9,
                  threshold_multiplier: float = 3.0,
-                 frame_ms: float = 1.0, 
+                 frame_ms: float = 1.0,
                  timeout_ms: float = 100.0,
-                 apply_highpass: bool = True, 
+                 apply_highpass: bool = True,
                  highpass_cutoff: float = 10000.0,
                  energy_calculator : BaseEnergyCalculator = SimpleEnergyCalculator(),
-                 return_indexes=False):
+                 return_indexes=False,
+                 pre_peak_ratio: float = 18.0,
+                 pre_peak_window: int = 8):
         self.threshold_history_ = None
         self.avg_history_ = None
         self.energy_history_ = None
@@ -32,6 +34,8 @@ class DecayAverageDetect(BounceDetector):
         self.highpass_cutoff = highpass_cutoff
         self.energy_calculator = energy_calculator
         self.return_indexes = return_indexes
+        self.pre_peak_ratio = pre_peak_ratio
+        self.pre_peak_window = pre_peak_window
 
 
 
@@ -63,12 +67,19 @@ class DecayAverageDetect(BounceDetector):
             if (e >= self.threshold_multiplier * avg_energy
                     and i - last_peak >= timeout_frames):
 
+                # Pre-peak onset check: reject if the spike isn't sharp
+                # enough relative to the frames just before it
+                if self.pre_peak_ratio > 0 and i >= self.pre_peak_window:
+                    pre_mean = energy[i - self.pre_peak_window:i].mean()
+                    if pre_mean > 1e-10 and e / pre_mean < self.pre_peak_ratio:
+                        continue
+
                 if self.return_indexes:
                     peaks.append(i*hop_length)
                 else:
                     timestamp = (i*hop_length) /sr
                     peaks.append(timestamp)
-                
+
                 last_peak = i
         return peaks
 
