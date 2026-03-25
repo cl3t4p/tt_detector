@@ -1,7 +1,7 @@
 from .base import BounceDetector,BaseEnergyCalculator
 from .energy_calculator import SimpleEnergyCalculator
 from collections import deque
-import src.audio_utils as audio_utils
+import audio_utils
 import scipy.signal as scipy_signal
 
 import numpy as np

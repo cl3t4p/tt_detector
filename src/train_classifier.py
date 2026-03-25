@@ -46,6 +46,7 @@ def main():
     trainer = lightning.Trainer(
             max_epochs=args.epochs,
             callbacks=callbacks,
+            logger=wandb_logger,
             deterministic=True,
             accelerator='auto'
             )

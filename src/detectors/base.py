@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import src.audio_utils as audio_utils
+import audio_utils
 import os
 
 

@@ -4,8 +4,9 @@ import lightning
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
+import torchaudio.transforms as transforms
 
-import src.audio_utils as audio_utils
+import audio_utils
 
 SURFACE_CLASSES = [
         'other',
@@ -75,13 +76,17 @@ class SoundDS(Dataset):
 
     def __init__(self,
                  csv_path: str,
-                 sounds_dir: str, 
+                 sounds_dir: str,
                  max_len: int = 661,
                  augment: bool = True):
         self.df = pd.read_csv(csv_path)
         self.sounds_dir = sounds_dir
         self.max_len = max_len
         self.augment = augment
+
+        # SpecAugment: mask up to 8 mel bins and 2 time frames
+        self.freq_mask = transforms.FrequencyMasking(freq_mask_param=8)
+        self.time_mask = transforms.TimeMasking(time_mask_param=2)
 
 
     def __len__(self):
@@ -102,6 +107,11 @@ class SoundDS(Dataset):
 
         waveform , sr = aud
         mel = audio_utils.mel_spectro_gram(waveform,sr)
+
+        if self.augment:
+            mel = self.freq_mask(mel)
+            mel = self.time_mask(mel)
+
         surface = _surface_label(row)
         spin = _spin_label(row)
             
