@@ -23,7 +23,7 @@ This project uses [uv](https://github.com/astral-sh/uv) as its package manager.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/tt_detector.git
+git clone https://github.com/cl3t4p/tt_detector.git
 cd tt_detector
 ```
 
@@ -33,15 +33,13 @@ cd tt_detector
 uv sync
 ```
 
-This will create a `.venv/` folder and install all dependencies defined in `pyproject.toml`.
-
 ### 3. Activate the environment
 
 ```bash
 source .venv/bin/activate
 ```
 
-> **Note:** Python 3.13+ is required. GPU support requires CUDA 12.x.
+> **Note:** Python 3.13+ is required. 
 
 ---
 
