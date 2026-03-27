@@ -84,7 +84,7 @@ class SoundDS(Dataset):
         self.max_len = max_len
         self.augment = augment
 
-        # SpecAugment: mask up to 8 mel bins and 2 time frames
+        # specmask mask up to 8 mel bins and 2 time frames
         self.freq_mask = transforms.FrequencyMasking(freq_mask_param=8)
         self.time_mask = transforms.TimeMasking(time_mask_param=2)
 
@@ -148,7 +148,7 @@ class SoundDataModule(lightning.LightningDataModule):
                                 self.max_len,
                                 augment=True
                                 )
-        self.test_ds = SoundDS(train_csv,
+        self.test_ds = SoundDS(test_csv,
                                self.sounds_dir,
                                self.max_len,
                                augment=False
@@ -159,7 +159,7 @@ class SoundDataModule(lightning.LightningDataModule):
                           shuffle=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.train_ds, batch_size=self.batch_size,
+        return DataLoader(self.test_ds, batch_size=self.batch_size,
                           shuffle=False, num_workers=self.num_workers)
 
     def test_dataloader(self):
