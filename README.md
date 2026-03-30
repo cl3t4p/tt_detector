@@ -45,14 +45,6 @@ source .venv/bin/activate
 
 ## Usage
 
-### Bounce Detection
-
-```bash
-python main.py
-```
-
-Runs a quick test comparing 4 energy calculation methods on a sample audio file.
-
 ### Train a Classifier
 
 ```bash
