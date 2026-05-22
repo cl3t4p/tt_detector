@@ -13,7 +13,7 @@ dependencies = [
     "lightning>=2.5.0",
     "torch>=2.10.0",
     "torchaudio>=2.10.0",
-    "torchcodec>=0.10.0",
+    "torchcodec>=0.11.0",
     "scipy-stubs~=1.17.1",
     "litlogger>=2026.3.17",
     "seaborn>=0.13.2",
@@ -26,7 +26,7 @@ dependencies = [
 torch = [
   { index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
-torchvision = [
+torchcodec = [
   { index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
 torchaudio = [
@@ -39,14 +39,6 @@ torchaudio = [
 #name = "pytorch-cu130"
 #url = "https://download.pytorch.org/whl/cu130"
 #explicit = true
-
-#[tool.uv.sources]
-#torch = [
-#  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
-#]
-#torchaudio = [
-#  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
-#]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"

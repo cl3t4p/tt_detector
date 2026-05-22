@@ -6,7 +6,7 @@ import sklearn.metrics as skmetrics
 
 ## Waveform visualization
 
-def plot_waveform(waveform, sr=44100,title="Waveform",ax=None):
+def plot_waveform(waveform, title="Waveform", ax=None):
     """Plot time-domain Waveform"""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10,3))
